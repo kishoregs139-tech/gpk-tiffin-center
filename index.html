@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#11100e">
+  <meta name="description" content="GPK TIFFIN CENTER food billing and menu management.">
+  <title>GPK Tiffin Center — Billing</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="site-header">
+    <button class="settings-button" id="open-settings" type="button" aria-label="Open settings" title="Settings">⚙️</button>
+    <div class="ornament">✧ ── ◇ ── ✧</div>
+    <p class="brand">GPK TIFFIN CENTER</p>
+    <h1 id="app-title">Billing</h1>
+    <p class="subtitle" id="app-subtitle">Food • Bill • Payment</p>
+  </header>
+
+  <main class="app-shell">
+    <nav class="steps" id="billing-steps" aria-label="Billing steps">
+      <div class="step active" data-step-indicator="1"><span>1</span><small>Food</small></div>
+      <div class="step-line"></div>
+      <div class="step" data-step-indicator="2"><span>2</span><small>Bill</small></div>
+      <div class="step-line"></div>
+      <div class="step" data-step-indicator="3"><span>3</span><small>Payment</small></div>
+    </nav>
+
+    <section class="page active" id="page-1">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">PAGE 1 OF 3</p>
+          <h2>Select food items</h2>
+          <p class="muted">Tap an item, then adjust its quantity.</p>
+        </div>
+        <button class="text-button" id="clear-cart" type="button">Clear all</button>
+      </div>
+
+      <section class="food-search" aria-label="Search food items">
+        <label class="food-search-label" for="food-search-input">Find food</label>
+        <div class="food-search-control">
+          <span class="food-search-icon" aria-hidden="true">⌕</span>
+          <input id="food-search-input" type="search" placeholder="Search food items..." autocomplete="off">
+          <button id="food-search-clear" type="button" aria-label="Clear food search" title="Clear search" hidden>×</button>
+        </div>
+        <div id="food-search-results" class="food-search-results" aria-live="polite" hidden></div>
+      </section>
+
+      <div class="category-tabs" id="category-tabs" role="tablist" aria-label="Food categories"></div>
+      <div class="menu-grid" id="menu-grid"></div>
+
+      <div class="sticky-summary">
+        <div><span class="muted">Selected items</span><strong id="selected-count">0 items</strong></div>
+        <div class="mini-total"><span class="muted">Total</span><strong id="page1-total">₹0.00</strong></div>
+        <button class="primary-button" id="to-bill" type="button">Next: Review bill <span>→</span></button>
+      </div>
+    </section>
+
+    <section class="page" id="page-2" hidden>
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">PAGE 2 OF 3</p>
+          <h2>Review your bill</h2>
+          <p class="muted">Check the items and total before payment.</p>
+        </div>
+      </div>
+      <div class="bill-card">
+        <div class="bill-top">
+          <div><p class="brand small-brand">GPK TIFFIN CENTER</p><p class="muted">Customer bill</p></div>
+          <div class="bill-number" id="bill-number">Draft bill</div>
+        </div>
+        <div class="bill-items" id="bill-items"></div>
+        <div class="bill-total-row"><span>Total amount</span><strong id="bill-total">₹0.00</strong></div>
+        <p class="bill-note">Please collect exactly the amount shown above.</p>
+      </div>
+      <div class="button-row">
+        <button class="secondary-button" id="back-to-food" type="button">← Edit items</button>
+        <button class="primary-button grow" id="to-payment" type="button">Continue to payment →</button>
+      </div>
+    </section>
+
+    <section class="page" id="page-3" hidden>
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">PAGE 3 OF 3</p>
+          <h2>UPI payment</h2>
+          <p class="muted">A payment request for the exact bill total.</p>
+        </div>
+      </div>
+      <div class="payment-card">
+        <p class="muted">Amount to pay</p>
+        <div class="payment-amount" id="payment-amount">₹0.00</div>
+        <div class="amount-lock"><span>✓</span> Amount set by bill</div>
+        <div id="qr-area" class="qr-area">
+          <div class="qr-placeholder"><span class="qr-icon">▦</span><strong>Please configure payment details in Settings.</strong></div>
+        </div>
+        <div class="payment-detail"><span>UPI ID</span><strong id="payment-upi-id">Not configured</strong></div>
+        <button class="secondary-button copy-upi-button" id="copy-upi-id" type="button" disabled>Copy UPI ID</button>
+        <div class="payment-detail"><span>Bill reference</span><strong id="payment-reference">—</strong></div>
+        <div class="notice"><strong>Static QR:</strong> This image may not include the bill amount. Scanning a QR does not verify payment; confirm receipt separately. Dynamic amount-specific UPI requests require a suitable payment integration.</div>
+        <div class="notice"><strong>Demo mode:</strong> This page cannot verify payments. Never treat a displayed or scanned QR as payment confirmation.</div>
+        <button class="primary-button full-width" id="demo-paid" type="button">Demo only: simulate paid</button>
+        <p id="payment-status" class="payment-status" role="status" aria-live="polite">Waiting for payment provider integration.</p>
+      </div>
+      <div class="button-row">
+        <button class="secondary-button" id="back-to-bill" type="button">← Back to bill</button>
+        <button class="primary-button grow" id="new-bill" type="button">New bill</button>
+      </div>
+    </section>
+
+    <section class="settings-panel" id="settings-panel" hidden aria-labelledby="settings-title">
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">DEVICE SETTINGS</p>
+          <h2 id="settings-title">Menu settings</h2>
+          <p class="muted">Manage the food menu and prices used for new bills.</p>
+        </div>
+        <button class="secondary-button" id="back-from-settings" type="button">← Back</button>
+      </div>
+
+      <div id="settings-home" class="settings-view">
+        <div class="settings-cards">
+          <button class="settings-card" type="button" data-settings-view="menu">
+            <span class="settings-card-icon" aria-hidden="true">🍽️</span>
+            <span><strong>Food Menu Management</strong><small>Add, rename, search, and organize menu items.</small></span>
+            <span class="card-arrow" aria-hidden="true">→</span>
+          </button>
+          <button class="settings-card" type="button" data-settings-view="prices">
+            <span class="settings-card-icon" aria-hidden="true">₹</span>
+            <span><strong>Food Price Management</strong><small>Review and update prices for every menu item.</small></span>
+            <span class="card-arrow" aria-hidden="true">→</span>
+          </button>
+          <button class="settings-card" type="button" data-settings-view="payment">
+            <span class="settings-card-icon" aria-hidden="true">▦</span>
+            <span><strong>Payment Settings</strong><small>Configure your UPI ID and payment QR image.</small></span>
+            <span class="card-arrow" aria-hidden="true">→</span>
+          </button>
+        </div>
+
+        <div class="data-tools">
+          <h3>Menu backup</h3>
+          <p class="muted">Menu settings are saved in localStorage on this browser and device. They do not automatically sync across devices.</p>
+          <div class="button-row tools-row">
+            <button class="secondary-button" id="export-menu" type="button">Export Menu</button>
+            <button class="secondary-button" id="import-menu" type="button">Import Menu</button>
+            <input id="import-menu-file" type="file" accept="application/json,.json" hidden>
+            <button class="danger-button" id="reset-menu" type="button">Reset to Default Menu</button>
+          </div>
+        </div>
+      </div>
+
+      <section class="settings-view" id="menu-management" hidden>
+        <div class="settings-section-heading">
+          <button class="text-button" type="button" data-settings-home>← Settings</button>
+          <div><h3>Food Menu Management</h3><p class="muted">Manage categories and their food items.</p></div>
+        </div>
+        <div id="menu-settings-content"></div>
+      </section>
+
+      <section class="settings-view" id="price-management" hidden>
+        <div class="settings-section-heading">
+          <button class="text-button" type="button" data-settings-home>← Settings</button>
+          <div><h3>Food Price Management</h3><p class="muted">Prices saved here apply to new bills.</p></div>
+        </div>
+        <div class="search-wrap">
+          <label for="price-search">Search food items</label>
+          <input id="price-search" type="search" placeholder="Search by item or category">
+        </div>
+        <div id="price-settings-content"></div>
+      </section>
+      <section class="settings-view" id="payment-management" hidden>
+        <div class="settings-section-heading">
+          <button class="text-button" type="button" data-settings-home>← Settings</button>
+          <div><h3>Payment Settings</h3><p class="muted">Saved payment details appear on the existing payment page and stay on this browser/device; they do not sync across devices.</p></div>
+        </div>
+        <form id="upi-settings-form" class="form-card payment-settings-form" novalidate>
+          <h4>UPI ID</h4>
+          <label for="upi-id-input">UPI ID</label>
+          <input id="upi-id-input" name="upiId" type="text" placeholder="yourname@upi" autocomplete="off" maxlength="255" spellcheck="false">
+          <p class="muted">Enter the UPI ID customers should use to pay you.</p>
+          <button class="secondary-button" type="submit">Save UPI ID</button>
+        </form>
+        <section class="form-card qr-settings-card" aria-labelledby="qr-settings-title">
+          <h4 id="qr-settings-title">Upload QR Code</h4>
+          <p class="muted">Choose a PNG, JPG, or JPEG image (up to 5 MB). The image is stored on this browser and device.</p>
+          <input id="payment-qr-file" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" hidden>
+          <div class="button-row qr-upload-actions">
+            <button class="secondary-button" id="upload-qr-button" type="button">Upload QR Code</button>
+            <button class="secondary-button" id="replace-qr-button" type="button" hidden>Replace QR Code</button>
+            <button class="danger-button" id="remove-qr-button" type="button" hidden>Remove QR Code</button>
+          </div>
+          <p id="qr-upload-status" class="payment-settings-note" role="status" aria-live="polite"></p>
+          <div class="payment-settings-preview">
+            <h4>Payment Preview</h4>
+            <p class="muted">Preview the configured or selected details here. Unsaved changes apply only after you save.</p>
+            <div class="payment-preview-upi"><span>UPI ID</span><strong id="settings-payment-upi">Not configured</strong></div>
+            <div id="settings-payment-preview" class="settings-payment-preview-content">
+              <p class="empty-state">Please configure payment details in Settings.</p>
+            </div>
+          </div>
+          <div class="form-actions payment-settings-actions">
+            <button class="primary-button" id="save-payment-settings" type="button">Save Payment Settings</button>
+            <button class="secondary-button" id="cancel-payment-settings" type="button">Cancel</button>
+          </div>
+          <button class="primary-button full-width settings-continue-payment" id="settings-continue-payment" type="button" disabled>Continue to Payment</button>
+        </section>
+      </section>
+      <p class="settings-feedback" id="settings-feedback" role="status" aria-live="polite"></p>
+    </section>
+
+    <footer class="app-footer">GPK TIFFIN CENTER · Billing prototype</footer>
+  </main>
+  <script src="./app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator && window.isSecureContext) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
+          .catch(error => console.error("Service worker registration failed:", error));
+      });
+    }
+  </script>
+</body>
+</html>
