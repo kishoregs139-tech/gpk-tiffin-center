@@ -50,7 +50,6 @@ const cart = new Map();
 let selectedSearchItemId = null;
 let paymentDatabasePromise = null;
 let paymentSettingsLoadPromise = null;
-let paymentTransitionInProgress = false;
 let paymentSettings = { upiId: "", qrBlob: null };
 let paymentSettingsLoaded = false;
 let paymentFormDirty = false;
@@ -238,17 +237,16 @@ async function waitForPaymentSettings() {
   if (paymentSettingsLoadPromise) await paymentSettingsLoadPromise;
   if (!paymentSettingsLoaded) throw new Error("Payment settings could not be loaded. Please refresh and retry.");
 }
-function refreshSettingsContinueButton() {
-  const hasBill = Boolean(currentBill && currentBill.items.length && currentTotal() > 0);
-  document.getElementById("settings-continue-payment").disabled = !hasBill;
-}
 async function persistPaymentSettings({ requireQr = false } = {}) {
   await waitForPaymentSettings();
-  const upiId = document.getElementById("upi-id-input").value.trim();
-  if (!upiId) throw new Error("Enter a UPI ID before saving payment settings.");
-  if (!isValidUpiId(upiId)) throw new Error("Enter a valid UPI ID, for example yourname@upi.");
+  const enteredUpiId = document.getElementById("upi-id-input").value.trim();
+  if (enteredUpiId && !isValidUpiId(enteredUpiId)) {
+    throw new Error("Enter a valid UPI ID, for example yourname@upi.");
+  }
+  const upiId = enteredUpiId || paymentSettings.upiId;
   const qrBlob = draftQrBlob || paymentSettings.qrBlob;
   if (requireQr && !qrBlob) throw new Error("Upload a QR image in Payment Settings before continuing to payment.");
+  if (!upiId && !qrBlob) throw new Error("Enter a UPI ID or upload a QR image before saving payment settings.");
   await writePaymentSettings({
     upiId,
     qrBlob,
@@ -261,15 +259,11 @@ async function persistPaymentSettings({ requireQr = false } = {}) {
   renderPayment();
   renderPaymentSettingsPreview();
   document.getElementById("qr-upload-status").textContent = "Payment settings saved.";
-  showSettingsMessage("Payment settings saved successfully.", "success");
+  showSettingsMessage("Payment settings saved successfully!", "success");
 }
 async function continueToPayment() {
-  if (paymentTransitionInProgress) return false;
-  paymentTransitionInProgress = true;
   const billButton = document.getElementById("to-payment");
-  const settingsButton = document.getElementById("settings-continue-payment");
   billButton.disabled = true;
-  settingsButton.disabled = true;
   try {
     if (!currentBill || !currentBill.items.length || currentTotal() <= 0) {
       const message = "Create a bill with at least one food item before continuing to payment.";
@@ -299,9 +293,7 @@ async function continueToPayment() {
     showPage(3);
     return true;
   } finally {
-    paymentTransitionInProgress = false;
     billButton.disabled = false;
-    refreshSettingsContinueButton();
   }
 }
 function totalQuantity() {
@@ -647,7 +639,6 @@ function renderPaymentSettingsPreview() {
 function renderPaymentSettings() {
   if (!paymentSettingsLoaded) return;
   renderPaymentSettingsPreview();
-  refreshSettingsContinueButton();
 }
 function deleteMenuItem(itemId) {
   const found = findItem(itemId);
@@ -818,7 +809,6 @@ document.getElementById("upi-settings-form").addEventListener("submit", async ev
     paymentFormDirty = false;
     renderPayment();
     renderPaymentSettingsPreview();
-    refreshSettingsContinueButton();
     showSettingsMessage("UPI ID saved successfully.", "success");
   } catch (error) {
     console.error("Could not save UPI ID.", error);
@@ -875,17 +865,13 @@ document.getElementById("remove-qr-button").addEventListener("click", async () =
 });
 document.getElementById("save-payment-settings").addEventListener("click", async () => {
   try {
-    await persistPaymentSettings({ requireQr: true });
+    await persistPaymentSettings();
+    showSettingsView("home");
+    showSettingsMessage("Payment settings saved successfully!", "success");
   } catch (error) {
     console.error("Could not save payment settings.", error);
     showSettingsMessage(`Could not save payment settings: ${error.message}`, "error");
   }
-});
-document.getElementById("settings-continue-payment").addEventListener("click", () => {
-  void continueToPayment().catch(error => {
-    console.error("Could not continue from Payment Settings.", error);
-    showSettingsMessage(`Could not continue to payment: ${error.message}`, "error");
-  });
 });
 document.getElementById("cancel-payment-settings").addEventListener("click", () => {
   clearDraftQr();
